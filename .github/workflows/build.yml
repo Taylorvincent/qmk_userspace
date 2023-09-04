@@ -15,13 +15,13 @@ jobs:
 
     steps:
       - name: Checkout QMK
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: qmk/qmk_firmware
           submodules: recursive
 
       - name: Checkout userspace
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: users/${{ github.actor }}
 
