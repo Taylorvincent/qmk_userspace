@@ -12,5 +12,10 @@ ifeq ($(QMK_FIRMWARE_ROOT),)
     $(error Cannot determine qmk_firmware location. `qmk config -ro user.qmk_home` is not set)
 endif
 
+# Custom targets
+crkbd:
+	keymapviz $(QMK_USERSPACE)/keyboards/crkbd/keymaps/vincent/keymap.c -r
+	qmk compile -kb crkbd -km vincent
+
 %:
 	+$(MAKE) -C $(QMK_FIRMWARE_ROOT) $(MAKECMDGOALS) QMK_USERSPACE=$(QMK_USERSPACE)
