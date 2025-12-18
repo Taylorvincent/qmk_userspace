@@ -1,5 +1,6 @@
 #include QMK_KEYBOARD_H
-#include "modules/stasmarkin/sm_td/sm_td/sm_td.h"
+#include "sm_td.h"
+
 // Colemak DH layout
 #define CM_Q    KC_Q
 #define CM_W    KC_W
