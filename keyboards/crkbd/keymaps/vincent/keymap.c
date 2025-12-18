@@ -62,15 +62,15 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
      * ├───┴───┼───┼───┼───┤       ├───┼───┼───┼───┴───┤
      * │ Z │ X │ C │ D │ V │       │ K │ H │ , │ . │ / │
      * └───────┴───┴───┴───┘       └───┴───┴───┴───────┘
-     *           ┌───────┐           ┌───────┐
-     *           │  SPC  │           │  ENT  │
-     *           └───────┘           └───────┘
+     *               ┌─────┐       ┌─────┐
+     *               │ BSP │       │ SPC │
+     *               └─────┘       └─────┘
      */
     [0] = LAYOUT_split_3x5_3(
         CM_Q,    CM_W,    CM_F,    CM_P,    CM_B,         CM_J,    CM_L,    CM_U,    CM_Y,    CM_SCLN,
         CM_A,    CM_R,    CM_S,    CM_T,    CM_G,         CM_M,    CM_N,    CM_E,    CM_I,    CM_O,
         CM_Z,    CM_X,    CM_C,    CM_D,    CM_V,         CM_K,    CM_H,    CM_COMM, CM_DOT,  CM_SLSH,
-                          KC_SPC,  KC_TAB,  KC_BSPC,      KC_ENT,  KC_DEL,  KC_ESC
+                          KC_ESC,  KC_BSPC,  KC_TAB,      KC_ENT,  KC_SPC,  KC_DEL
     ),
 };
 
