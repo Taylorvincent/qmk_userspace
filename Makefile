@@ -14,7 +14,7 @@ endif
 
 # Custom targets
 crkbd:
-	keymapviz $(QMK_USERSPACE)/keyboards/crkbd/keymaps/vincent/keymap.c -r
+	keymapviz $(QMK_USERSPACE)/keyboards/crkbd/keymaps/vincent/keymap.c -r -c $(QMK_USERSPACE)/keymapviz.ini
 	qmk compile -kb crkbd -km vincent
 
 %:
