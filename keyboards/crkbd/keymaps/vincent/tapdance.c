@@ -1,3 +1,7 @@
+// Possibly not needed, used for repeat key functionality (not used here)
+uint16_t last_keycode = KC_NO;
+
+
 static void sentence_end(tap_dance_state_t *state, void *user_data) {
     switch (state->count) {
 

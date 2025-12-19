@@ -1,6 +1,7 @@
 #include QMK_KEYBOARD_H
 #include "sm_td.h"
-
+#include "combos.c"
+#include "vincent_keymap.h"
 enum layer_names {
     _BASE,
     _LOWER,
@@ -45,7 +46,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [_BASE] = LAYOUT_split_3x6_3(
         KC_NO,   KC_Q,    KC_W,    KC_F,    KC_P,    KC_B,         KC_J,    KC_L,    KC_U,    KC_Y,    KC_SCLN, KC_NO,
         KC_NO,   KC_A,    KC_R,    KC_S,    KC_T,    KC_G,         KC_M,    KC_N,    KC_E,    KC_I,    KC_O,    KC_NO,
-        KC_NO,   KC_Z,    KC_X,    KC_C,    KC_D,    KC_V,         KC_K,    KC_H,    KC_COMM, KC_DOT,  KC_SLSH, KC_NO,
+        KC_NO,   KC_Z,    KC_X,    KC_C,    KC_D,    KC_V,         KC_K,    KC_H,    KC_COMM, TD_DOT,  KC_SLSH, KC_NO,
                                  KC_ESC,  KC_BSPC, KC_TAB,         KC_ENTER, KC_SPC,  KC_DEL
     ),
 
@@ -105,3 +106,7 @@ layer_state_t layer_state_set_user(layer_state_t state) {
     return update_tri_layer_state(state, _LOWER, _RAISE, _ADJUST);
 }
 
+#ifdef TAP_DANCE_ENABLE
+    // Due to keymap introspection, the old `SRC += tapdance.c` technique in rules.mk no longer works
+    #include "tapdance.c"
+#endif
