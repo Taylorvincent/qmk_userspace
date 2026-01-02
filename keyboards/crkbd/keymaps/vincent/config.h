@@ -1,11 +1,11 @@
 #pragma once
-
-// #define PERMISSIVE_HOLD
-#define CHORDAL_HOLD
-#define FLOW_TAP_TERM 150
 #define COMBO_COUNT 105
-
-#define TAPPING_TERM 250
 #define COMBO_TERM 35
+
+#define TAPPING_TERM 300
+#define FLOW_TAP_TERM 150
+#define CHORDAL_HOLD
+// #define PERMISSIVE_HOLD
+// #define SPECULATIVE_HOLD
 
 #define ONESHOT_TIMEOUT 4000
