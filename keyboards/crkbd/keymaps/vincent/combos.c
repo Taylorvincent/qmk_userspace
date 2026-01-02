@@ -4,6 +4,7 @@ const uint16_t PROGMEM rt_combo[] = {KC_R, KC_T, COMBO_END};
 const uint16_t PROGMEM ha_combo[] = {KC_H, KC_A, COMBO_END};
 const uint16_t PROGMEM ae_combo[] = {KC_A, KC_E, COMBO_END};
 // const uint16_t PROGMEM ei_combo[] = {KC_E, KC_I, COMBO_END};
+const uint16_t PROGMEM gy_combo[] = {KC_G, KC_Y, COMBO_END};
 combo_t key_combos[] = {
     COMBO(dw_combo, KC_ESC),
     COMBO(ld_combo, KC_ESC),
@@ -11,4 +12,5 @@ combo_t key_combos[] = {
     COMBO(ha_combo, KC_BSPC),
     COMBO(ae_combo, KC_DEL),
     // COMBO(ei_combo, KC_BSPC),
+    COMBO(gy_combo, CW_TOGG),
 };
