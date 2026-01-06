@@ -1,0 +1,290 @@
+#!/usr/bin/env python3
+"""
+Parse combos from keymap.c and add them to keymap.yaml
+"""
+import re
+import sys
+from pathlib import Path
+
+try:
+    import yaml
+except ImportError:
+    print("Error: PyYAML is required but not installed.")
+    print("Install it using one of these methods:")
+    print("  1. brew install pyyaml")
+    print("  2. pipx install keymap-drawer  (includes PyYAML)")
+    print("  3. python3 -m pip install --user PyYAML")
+    print("  4. python3 -m pip install --break-system-packages PyYAML")
+    sys.exit(1)
+
+# Mapping from QMK keycodes to their display names in YAML
+KEYCODE_MAP = {
+    'KC_B': 'B', 'KC_L': 'L', 'KC_D': 'D', 'KC_W': 'W', 'KC_Q': 'Q',
+    'KC_J': 'J', 'KC_F': 'F', 'KC_O': 'O', 'KC_U': 'U', 'KC_QUOT': "''",
+    'KC_N': 'N', 'KC_R': 'R', 'KC_T': 'T', 'KC_S': 'S', 'KC_G': 'G',
+    'KC_Y': 'Y', 'KC_H': 'H', 'KC_A': 'A', 'KC_E': 'E', 'KC_I': 'I',
+    'KC_Z': 'Z', 'KC_X': 'X', 'KC_M': 'M', 'KC_C': 'C', 'KC_V': 'V',
+    'KC_K': 'K', 'KC_P': 'P', 'KC_COMM': ',', 'KC_DOT': '.', 'KC_SLSH': '/',
+    'KC_ESC': 'ESC', 'KC_BSPC': 'BSPC', 'KC_TAB': 'TAB', 'KC_ENTER': 'ENTER',
+    'KC_SPC': 'SPC', 'KC_DEL': 'DEL', 'KC_MINUS': '-', 'CW_TOGG': 'CW_TOGG',
+}
+
+# Mod-tap keycode patterns
+MOD_TAP_PATTERNS = [
+    (r'LCTL_T\(KC_(\w+)\)', 'LCTL'),
+    (r'LALT_T\(KC_(\w+)\)', 'LALT'),
+    (r'LSFT_T\(KC_(\w+)\)', 'LSFT'),
+    (r'LGUI_T\(KC_(\w+)\)', 'LGUI'),
+]
+
+
+def extract_keycode(keycode_str):
+    """Extract the base keycode from a keycode string, handling mod-taps."""
+    keycode_str = keycode_str.strip()
+    
+    # Check for mod-tap patterns
+    for pattern, mod in MOD_TAP_PATTERNS:
+        match = re.match(pattern, keycode_str)
+        if match:
+            base_key = match.group(1)
+            return f"KC_{base_key}", mod
+    
+    # Direct keycode
+    return keycode_str, None
+
+
+def find_key_position(keycode, yaml_data):
+    """Find the position index of a keycode in the YAML layers."""
+    # Use L0 layer as reference
+    layer = yaml_data['layers'].get('L0', [])
+    
+    keycode_str, mod = extract_keycode(keycode)
+    base_key = KEYCODE_MAP.get(keycode_str)
+    
+    if not base_key:
+        # Try to handle special cases
+        if keycode_str == "KC_COMM":
+            base_key = ','
+        elif keycode_str == "KC_DOT":
+            base_key = '.'
+        else:
+            return None
+    
+    # Search for the key in the layer
+    for idx, key in enumerate(layer):
+        if isinstance(key, str):
+            if key == base_key:
+                # If we're looking for a mod-tap but found a plain key, skip
+                if not mod:
+                    return idx
+        elif isinstance(key, dict):
+            # Check tap field
+            tap_val = key.get('t')
+            if tap_val == base_key:
+                # If mod-tap, also check the mod matches
+                if mod:
+                    mod_map = {'LCTL': 'LCTL', 'LALT': 'LALT', 'LSFT': 'LSFT', 'LGUI': 'LGUI'}
+                    if key.get('h') == mod_map.get(mod):
+                        return idx
+                else:
+                    # Looking for plain key, found mod-tap - that's okay
+                    return idx
+    
+    return None
+
+
+def parse_combos_from_c(keymap_c_path):
+    """Parse combo definitions from keymap.c file."""
+    with open(keymap_c_path, 'r') as f:
+        content = f.read()
+    
+    combos = []
+    
+    # Find all combo array definitions like: const uint16_t PROGMEM xxx_combo[] = {KC_X, KC_Y, COMBO_END};
+    combo_array_pattern = r'const uint16_t PROGMEM (\w+)\[\]\s*=\s*\{([^}]+)\};'
+    combo_arrays = {}
+    
+    for match in re.finditer(combo_array_pattern, content):
+        combo_name = match.group(1)
+        keys_str = match.group(2)
+        # Extract keycodes, handling nested parentheses for mod-taps
+        keys = []
+        current_key = ""
+        paren_depth = 0
+        for char in keys_str:
+            if char == '(':
+                paren_depth += 1
+                current_key += char
+            elif char == ')':
+                paren_depth -= 1
+                current_key += char
+            elif char == ',' and paren_depth == 0:
+                key = current_key.strip()
+                if key and 'COMBO_END' not in key:
+                    keys.append(key)
+                current_key = ""
+            else:
+                current_key += char
+        # Add last key if any
+        if current_key.strip() and 'COMBO_END' not in current_key:
+            keys.append(current_key.strip())
+        combo_arrays[combo_name] = keys
+    
+    # Find combo_t key_combos[] array - extract the entire array content
+    combo_array_start = content.find('combo_t key_combos[] = {')
+    if combo_array_start == -1:
+        return combos
+    
+    combo_array_end = content.find('};', combo_array_start)
+    if combo_array_end == -1:
+        return combos
+    
+    combo_array_content = content[combo_array_start:combo_array_end]
+    
+    # Parse COMBO() calls
+    combo_pattern = r'COMBO\s*\(\s*(\w+)\s*,\s*(\w+)\s*\)'
+    for match in re.finditer(combo_pattern, combo_array_content):
+        combo_array_name = match.group(1)
+        result_keycode = match.group(2)
+        keys = combo_arrays.get(combo_array_name, [])
+        if keys:
+            combos.append({
+                'keys': keys,
+                'result': result_keycode,
+                'action': False
+            })
+    
+    # Parse COMBO_ACTION() calls
+    combo_action_pattern = r'\[\s*(\w+)\s*\]\s*=\s*COMBO_ACTION\s*\(\s*(\w+)\s*\)'
+    for match in re.finditer(combo_action_pattern, combo_array_content):
+        combo_event = match.group(1)
+        combo_array_name = match.group(2)
+        keys = combo_arrays.get(combo_array_name, [])
+        if keys:
+            # Check process_combo_event for the action
+            action_result = find_combo_action(content, combo_event)
+            combos.append({
+                'keys': keys,
+                'result': action_result or f"ACTION_{combo_event}",
+                'action': True
+            })
+    
+    return combos
+
+
+def find_combo_action(content, combo_event):
+    """Find what action a combo event performs."""
+    # Look for process_combo_event function
+    # Match case statement and SEND_STRING
+    pattern = rf'case\s+{combo_event}:\s*(?:if\s*\([^)]+\)\s*{{)?\s*SEND_STRING\("([^"]+)"\)'
+    match = re.search(pattern, content, re.DOTALL)
+    if match:
+        email = match.group(1)
+        return f"EMAIL: {email}"
+    return None
+
+
+def add_combos_to_yaml(yaml_path, combos, keymap_c_path):
+    """Add parsed combos to the YAML file."""
+    with open(yaml_path, 'r') as f:
+        yaml_data = yaml.safe_load(f)
+    
+    if 'combos' not in yaml_data:
+        yaml_data['combos'] = []
+    
+    # Parse combos from C file
+    parsed_combos = parse_combos_from_c(keymap_c_path)
+    print(f"Found {len(parsed_combos)} combos in keymap.c")
+    
+    # Convert to YAML format
+    yaml_combos = []
+    for combo in parsed_combos:
+        keys = combo['keys']
+        if len(keys) < 2:
+            continue
+        
+        # Find positions for the keys
+        positions = []
+        trigger_keys = []
+        
+        for keycode in keys:
+            pos = find_key_position(keycode, yaml_data)
+            if pos is not None:
+                positions.append(pos)
+                # Get the key display name
+                keycode_str, mod = extract_keycode(keycode)
+                base_key = KEYCODE_MAP.get(keycode_str, keycode_str)
+                if mod:
+                    trigger_keys.append({'t': base_key, 'h': mod})
+                else:
+                    trigger_keys.append(base_key)
+            else:
+                print(f"  Warning: Could not find position for keycode {keycode}")
+        
+        if len(positions) == len(keys):
+            # Use trigger_keys format as it's more readable
+            result = combo['result']
+            # Convert result keycode to display format
+            result_display = KEYCODE_MAP.get(result, result)
+            
+            combo_spec = {
+                'tk': trigger_keys,
+                'k': result_display,
+                'l': ['L0']  # Only on base layer
+            }
+            yaml_combos.append(combo_spec)
+    
+    # Initialize combos list if it doesn't exist
+    if 'combos' not in yaml_data:
+        yaml_data['combos'] = []
+    
+    # Add new combos (avoid duplicates)
+    # Create a set of existing combo trigger keys for comparison
+    def normalize_tk(tk_list):
+        """Normalize trigger keys for comparison."""
+        if not tk_list:
+            return tuple()
+        normalized = []
+        for item in tk_list:
+            if isinstance(item, dict):
+                normalized.append((item.get('t'), item.get('h')))
+            else:
+                normalized.append((item, None))
+        return tuple(sorted(normalized))
+    
+    existing_tk_sets = {normalize_tk(c.get('tk', c.get('p', []))) for c in yaml_data.get('combos', [])}
+    added_count = 0
+    for combo in yaml_combos:
+        tk_set = normalize_tk(combo.get('tk', []))
+        if tk_set not in existing_tk_sets:
+            yaml_data['combos'].append(combo)
+            existing_tk_sets.add(tk_set)
+            added_count += 1
+            print(f"  Added combo: {combo.get('tk')} -> {combo.get('k')}")
+    
+    # Write back to file
+    with open(yaml_path, 'w') as f:
+        yaml.dump(yaml_data, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
+    
+    print(f"Added {added_count} new combos to {yaml_path} (total: {len(yaml_data['combos'])})")
+
+
+def main():
+    script_dir = Path(__file__).parent
+    keymap_c_path = script_dir / 'keymap.c'
+    yaml_path = script_dir / 'keymap.yaml'
+    
+    if not keymap_c_path.exists():
+        print(f"Error: {keymap_c_path} not found")
+        sys.exit(1)
+    
+    if not yaml_path.exists():
+        print(f"Error: {yaml_path} not found")
+        sys.exit(1)
+    
+    add_combos_to_yaml(yaml_path, [], keymap_c_path)
+
+
+if __name__ == '__main__':
+    main()
+
