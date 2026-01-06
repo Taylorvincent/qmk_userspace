@@ -61,6 +61,10 @@ def find_key_position(keycode, yaml_data):
     keycode_str, mod = extract_keycode(keycode)
     base_key = KEYCODE_MAP.get(keycode_str)
     
+    # Ensure KC_QUOT has the correct base_key (two single quotes)
+    if keycode_str == "KC_QUOT":
+        base_key = "''"
+    
     if not base_key:
         # Try to handle special cases
         if keycode_str == "KC_COMM":
@@ -73,7 +77,14 @@ def find_key_position(keycode, yaml_data):
     # Search for the key in the layer
     for idx, key in enumerate(layer):
         if isinstance(key, str):
-            if key == base_key:
+            # Special handling for KC_QUOT - YAML '''' parses to '' (two single quotes)
+            if keycode_str == "KC_QUOT":
+                # Check if the key is exactly two single quote characters
+                # YAML '''' should parse to '', but be robust to different representations
+                if (len(key) == 2 and key[0] == "'" and key[1] == "'") or key == "''" or key == base_key:
+                    if not mod:
+                        return idx
+            elif key == base_key:
                 # If we're looking for a mod-tap but found a plain key, skip
                 if not mod:
                     return idx
@@ -93,9 +104,9 @@ def find_key_position(keycode, yaml_data):
     return None
 
 
-def parse_combos_from_c(keymap_c_path):
-    """Parse combo definitions from keymap.c file."""
-    with open(keymap_c_path, 'r') as f:
+def parse_combos_from_c(combos_c_path):
+    """Parse combo definitions from combos.c file."""
+    with open(combos_c_path, 'r') as f:
         content = f.read()
     
     combos = []
@@ -184,7 +195,7 @@ def find_combo_action(content, combo_event):
     return None
 
 
-def add_combos_to_yaml(yaml_path, combos, keymap_c_path):
+def add_combos_to_yaml(yaml_path, combos, combos_c_path):
     """Add parsed combos to the YAML file."""
     with open(yaml_path, 'r') as f:
         yaml_data = yaml.safe_load(f)
@@ -193,8 +204,8 @@ def add_combos_to_yaml(yaml_path, combos, keymap_c_path):
         yaml_data['combos'] = []
     
     # Parse combos from C file
-    parsed_combos = parse_combos_from_c(keymap_c_path)
-    print(f"Found {len(parsed_combos)} combos in keymap.c")
+    parsed_combos = parse_combos_from_c(combos_c_path)
+    print(f"Found {len(parsed_combos)} combos in combos.c")
     
     # Convert to YAML format
     yaml_combos = []
@@ -271,18 +282,18 @@ def add_combos_to_yaml(yaml_path, combos, keymap_c_path):
 
 def main():
     script_dir = Path(__file__).parent
-    keymap_c_path = script_dir / 'keymap.c'
+    combos_c_path = script_dir / 'combos.c'
     yaml_path = script_dir / 'keymap.yaml'
     
-    if not keymap_c_path.exists():
-        print(f"Error: {keymap_c_path} not found")
+    if not combos_c_path.exists():
+        print(f"Error: {combos_c_path} not found")
         sys.exit(1)
     
     if not yaml_path.exists():
         print(f"Error: {yaml_path} not found")
         sys.exit(1)
     
-    add_combos_to_yaml(yaml_path, [], keymap_c_path)
+    add_combos_to_yaml(yaml_path, [], combos_c_path)
 
 
 if __name__ == '__main__':
