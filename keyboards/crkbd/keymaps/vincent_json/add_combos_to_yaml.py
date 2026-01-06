@@ -20,7 +20,7 @@ except ImportError:
 # Mapping from QMK keycodes to their display names in YAML
 KEYCODE_MAP = {
     'KC_B': 'B', 'KC_L': 'L', 'KC_D': 'D', 'KC_W': 'W', 'KC_Q': 'Q',
-    'KC_J': 'J', 'KC_F': 'F', 'KC_O': 'O', 'KC_U': 'U', 'KC_QUOT': "''",
+    'KC_J': 'J', 'KC_F': 'F', 'KC_O': 'O', 'KC_U': 'U', 'KC_QUOT': "'",
     'KC_N': 'N', 'KC_R': 'R', 'KC_T': 'T', 'KC_S': 'S', 'KC_G': 'G',
     'KC_Y': 'Y', 'KC_H': 'H', 'KC_A': 'A', 'KC_E': 'E', 'KC_I': 'I',
     'KC_Z': 'Z', 'KC_X': 'X', 'KC_M': 'M', 'KC_C': 'C', 'KC_V': 'V',
@@ -61,9 +61,10 @@ def find_key_position(keycode, yaml_data):
     keycode_str, mod = extract_keycode(keycode)
     base_key = KEYCODE_MAP.get(keycode_str)
     
-    # Ensure KC_QUOT has the correct base_key (two single quotes)
+    # Ensure KC_QUOT has the correct base_key
+    # YAML '''' parses to a single quote, so we need to match that
     if keycode_str == "KC_QUOT":
-        base_key = "''"
+        base_key = "'"
     
     if not base_key:
         # Try to handle special cases
@@ -77,11 +78,10 @@ def find_key_position(keycode, yaml_data):
     # Search for the key in the layer
     for idx, key in enumerate(layer):
         if isinstance(key, str):
-            # Special handling for KC_QUOT - YAML '''' parses to '' (two single quotes)
+            # Special handling for KC_QUOT - YAML '''' actually parses to a single quote
             if keycode_str == "KC_QUOT":
-                # Check if the key is exactly two single quote characters
-                # YAML '''' should parse to '', but be robust to different representations
-                if (len(key) == 2 and key[0] == "'" and key[1] == "'") or key == "''" or key == base_key:
+                # Match a single quote character
+                if key == "'" or key == base_key:
                     if not mod:
                         return idx
             elif key == base_key:
