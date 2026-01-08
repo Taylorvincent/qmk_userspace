@@ -1,7 +1,5 @@
 #pragma once
 #define COMBO_COUNT 11
-#define COMBO_TERM 35
-#define COMBO_TERM_PER_COMBO
 
 #define TAPPING_TERM 300
 #define FLOW_TAP_TERM 150
