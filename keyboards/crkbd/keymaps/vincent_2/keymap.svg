@@ -275,7 +275,7 @@ path.combo {
 <g transform="translate(433, 224) rotate(-30.0)" class="key keypos-33">
 <rect rx="6" ry="6" x="-26" y="-40" width="52" height="80" class="key"/>
 <text x="0" y="0" class="key tap">
-<tspan x="0" dy="-1.2em">OS</tspan><tspan x="0" dy="1.2em">SHFT</tspan><tspan x="0" dy="1.2em">4</tspan>
+<tspan x="0" dy="-1.2em">TD(OS</tspan><tspan x="0" dy="1.2em">SHFT</tspan><tspan x="0" dy="1.2em">…</tspan>
 </text>
 </g>
 <g transform="translate(498, 213) rotate(-15.0)" class="key keypos-34">
