@@ -29,7 +29,7 @@ combo_t key_combos[] = {
     [COMBO_P_COMMA] = COMBO(p_comma_combo, KC_MINUS),
     [COMBO_GY] = COMBO(gy_combo, CW_TOGG),
     [VI_EMAIL] = COMBO_ACTION(vi_email_combo),
-    [COMBO_THUMB] = COMBO(combo_thumb, CW_TOGG),
+    [COMBO_THUMB] = COMBO(combo_thumb, KC_LSFT),
 };
 
 // Per-combo terms: lower for homerow mod combos to avoid accidental triggers
