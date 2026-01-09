@@ -4,7 +4,8 @@ enum combo_events {
     COMBO_P_COMMA,
     COMBO_GY,
     VI_EMAIL,
-    COMBO_THUMB
+    COMBO_THUMB,
+    COMBO_U_QUOTE
 };
 
 /**

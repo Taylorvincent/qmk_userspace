@@ -1,9 +1,9 @@
 // Tap Dance keycodes
 enum td_keycodes {
-    OS_SHFT_4_TD, // Oneshot shift on tap, layer 4 on hold
-    DOT_TD,
-    COMM_TD,
-    SLASH_TD,
+    OS_SHFT_4_TD, // OS_Shift L4 
+    COMM_TD, // , ;
+    DOT_TD, // . TD_DOT
+    SLASH_TD, // / Bslash
 };
 
 // Define a type containing as many tapdance states as you need
@@ -66,7 +66,7 @@ void os_shft_4_reset(tap_dance_state_t *state, void *user_data) {
     }
 }
 
-static void sentence_end(tap_dance_state_t *state, void *user_data) {
+void sentence_end(tap_dance_state_t *state, void *user_data) {
     switch (state->count) {
 
         // Double tapping TD_DOT produces
@@ -109,8 +109,8 @@ void sentence_end_finished (tap_dance_state_t *state, void *user_data) {
 
 // Define tapdance actions
 tap_dance_action_t tap_dance_actions[] = {
-    [OS_SHFT_4_TD] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, os_shft_4_finished, os_shft_4_reset) // OS_Shift L4 
-    [COMM_TD] = ACTION_TAP_DANCE_DOUBLE(KC_COMM, KC_SEMICOLON), // , ;
-    [BSLASH_TD] = ACTION_TAP_DANCE_DOUBLE(KC_SLASH, KC_BACKSLASH), // / Bslash
-    [DOT_TD] = ACTION_TAP_DANCE_FN_ADVANCED(sentence_end, sentence_end_finished, NULL), // . TD_DOT
+    [OS_SHFT_4_TD] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, os_shft_4_finished, os_shft_4_reset),
+    [COMM_TD] = ACTION_TAP_DANCE_DOUBLE(KC_COMM, KC_SEMICOLON),
+    [DOT_TD] = ACTION_TAP_DANCE_FN_ADVANCED(sentence_end, sentence_end_finished, NULL),
+    [SLASH_TD] = ACTION_TAP_DANCE_DOUBLE(KC_SLASH, KC_BACKSLASH),
 };

@@ -22,7 +22,7 @@ KEYMAP_JSON := $(QMK_USERSPACE)/keyboards/crkbd/keymaps/vincent_2/keymap.json
 KEYMAP_YAML := $(QMK_USERSPACE)/keyboards/crkbd/keymaps/vincent_2/keymap.yaml
 KEYMAP_SVG := $(QMK_USERSPACE)/keyboards/crkbd/keymaps/vincent_2/keymap.svg
 KEYMAP_C := $(QMK_USERSPACE)/keyboards/crkbd/keymaps/vincent_2/keymap.c
-ADD_COMBOS_SCRIPT := $(QMK_USERSPACE)/keyboards/crkbd/keymaps/vincent_2/add_combos_to_yaml.py
+ADD_COMBOS_SCRIPT := $(QMK_USERSPACE)/keyboards/crkbd/keymaps/vincent_2/enhance_yaml.py
 	
 crkbd: $(KEYMAP_SVG)
 	qmk compile -kb crkbd -km vincent_2

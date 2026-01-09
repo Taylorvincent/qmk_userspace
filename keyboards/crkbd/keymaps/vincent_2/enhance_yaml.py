@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 Parse combos from keymap.c and add them to keymap.yaml
+Also parse tap dances from tapdance.c and add them to keymap visualization
 """
 import re
 import sys
@@ -195,7 +196,147 @@ def find_combo_action(content, combo_event):
     return None
 
 
-def add_combos_to_yaml(yaml_path, combos, combos_c_path):
+def parse_tapdances_from_c(tapdance_c_path):
+    """Parse tap dance definitions from tapdance.c file.
+    Reads comments from the td_keycodes enum and splits them:
+    - First segment -> tap field (keypress)
+    - Second segment -> shifted/top field
+    """
+    with open(tapdance_c_path, 'r') as f:
+        content = f.read()
+    
+    tapdances = {}
+    
+    # Find the enum to parse comments from it
+    enum_pattern = r'enum\s+td_keycodes\s*\{([^}]+)\}'
+    enum_match = re.search(enum_pattern, content)
+    if not enum_match:
+        return tapdances
+    
+    enum_content = enum_match.group(1)
+    
+    # Parse each enum entry: ENUM_NAME, // comment
+    for line in enum_content.split('\n'):
+        line = line.strip()
+        if not line or line.startswith('//'):
+            continue
+        
+        # Extract enum name and comment
+        # Pattern: ENUM_NAME, // comment or ENUM_NAME // comment
+        parts = line.split('//', 1)
+        if len(parts) < 2:
+            continue
+        
+        enum_name_part = parts[0].strip()
+        comment = parts[1].strip()
+        
+        # Extract enum name (remove trailing comma)
+        enum_name = enum_name_part.rstrip(',').strip()
+        if not enum_name:
+            continue
+        
+        # Split comment on space - first part is tap, second part is top
+        comment_parts = comment.split(None, 1)  # Split on whitespace, max 1 split
+        tap_text = comment_parts[0] if len(comment_parts) > 0 else ""
+        top_text = comment_parts[1] if len(comment_parts) > 1 else ""
+        
+        # Store both tap and top text
+        tapdances[enum_name] = {
+            'tap': tap_text,
+            'top': top_text
+        }
+    
+    return tapdances
+
+
+def find_tapdance_keys_in_yaml(yaml_data, td_enum_name):
+    """Find all keys in YAML that use TD(td_enum_name).
+    Note: keymap parse converts underscores to spaces, so we need to match both.
+    """
+    td_keys = []
+    
+    # Create pattern that matches both underscores and spaces
+    # COMM_TD should match both "TD(COMM_TD)" and "TD(COMM TD)"
+    # keymap parse converts underscores to spaces in YAML output
+    pattern_underscore = re.escape(td_enum_name)
+    pattern_space = re.escape(td_enum_name.replace('_', ' '))
+    
+    # Search through all layers
+    for layer_name, layer_keys in yaml_data.get('layers', {}).items():
+        for idx, key in enumerate(layer_keys):
+            # Check if key is a string containing TD(ENUM_NAME)
+            if isinstance(key, str):
+                # Match TD(ENUM_NAME) with underscores or spaces
+                if (re.search(rf'TD\s*\(\s*{pattern_underscore}\s*\)', key) or
+                    re.search(rf'TD\s*\(\s*{pattern_space}\s*\)', key)):
+                    td_keys.append((layer_name, idx, key))
+            # Check if key is a dict with tap field containing TD(ENUM_NAME)
+            elif isinstance(key, dict):
+                tap_val = key.get('t') or key.get('tap') or key.get('center')
+                if tap_val:
+                    tap_str = str(tap_val)
+                    if (re.search(rf'TD\s*\(\s*{pattern_underscore}\s*\)', tap_str) or
+                        re.search(rf'TD\s*\(\s*{pattern_space}\s*\)', tap_str)):
+                        td_keys.append((layer_name, idx, key))
+    
+    return td_keys
+
+
+def add_tapdances_to_yaml(yaml_data, tapdances, tapdance_c_path):
+    """Add tap dance labels to YAML keys.
+    tapdances is a dict mapping enum_name -> {'tap': '...', 'top': '...'}
+    """
+    if not tapdances:
+        return 0
+    
+    updated_count = 0
+    
+    for td_enum_name, td_data in tapdances.items():
+        # Find keys using this tap dance
+        td_keys = find_tapdance_keys_in_yaml(yaml_data, td_enum_name)
+        
+        tap_text = td_data.get('tap', '')
+        top_text = td_data.get('top', '')
+        
+        for layer_name, key_idx, key in td_keys:
+            layer = yaml_data['layers'][layer_name]
+            
+            # Convert key to dict if it's a string
+            if isinstance(key, str):
+                # Create dict with tap and top fields
+                new_key = {}
+                # Set tap field - use tap_text if available, otherwise keep original keycode
+                if tap_text:
+                    new_key['t'] = tap_text
+                else:
+                    new_key['t'] = key  # Keep original if no tap text
+                # Set top field (shifted) if we have top text
+                if top_text:
+                    new_key['s'] = top_text
+                layer[key_idx] = new_key
+                updated_count += 1
+                print(f"  Added tap dance to {layer_name}[{key_idx}]: {td_enum_name} -> tap:'{tap_text}' top:'{top_text}'")
+            elif isinstance(key, dict):
+                # Update tap and top fields
+                updated = False
+                # Update tap field if we have tap_text
+                if tap_text:
+                    if key.get('t') != tap_text:
+                        key['t'] = tap_text
+                        updated = True
+                # Update top field if we have top_text
+                if top_text:
+                    if key.get('s') != top_text and key.get('shifted') != top_text and key.get('top') != top_text:
+                        key['s'] = top_text
+                        updated = True
+                if updated:
+                    updated_count += 1
+                    print(f"  Updated tap dance on {layer_name}[{key_idx}]: {td_enum_name} -> tap:'{tap_text}' top:'{top_text}'")
+    
+    return updated_count
+
+
+def enhance_yaml(yaml_path, combos, combos_c_path):
     """Add parsed combos to the YAML file."""
     with open(yaml_path, 'r') as f:
         yaml_data = yaml.safe_load(f)
@@ -206,6 +347,16 @@ def add_combos_to_yaml(yaml_path, combos, combos_c_path):
     # Parse combos from C file
     parsed_combos = parse_combos_from_c(combos_c_path)
     print(f"Found {len(parsed_combos)} combos in combos.c")
+    
+    # Parse tap dances from tapdance.c
+    script_dir = Path(yaml_path).parent
+    tapdance_c_path = script_dir / 'tapdance.c'
+    tapdances = {}
+    if tapdance_c_path.exists():
+        tapdances = parse_tapdances_from_c(tapdance_c_path)
+        print(f"Found {len(tapdances)} tap dances in tapdance.c")
+    else:
+        print(f"Warning: {tapdance_c_path} not found, skipping tap dance parsing")
     
     # Convert to YAML format
     yaml_combos = []
@@ -273,6 +424,11 @@ def add_combos_to_yaml(yaml_path, combos, combos_c_path):
             added_count += 1
             print(f"  Added combo: {combo.get('tk')} -> {combo.get('k')}")
     
+    # Add tap dances to YAML
+    if tapdances:
+        td_count = add_tapdances_to_yaml(yaml_data, tapdances, tapdance_c_path)
+        print(f"Updated {td_count} keys with tap dance labels")
+    
     # Write back to file
     with open(yaml_path, 'w') as f:
         yaml.dump(yaml_data, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
@@ -293,7 +449,7 @@ def main():
         print(f"Error: {yaml_path} not found")
         sys.exit(1)
     
-    add_combos_to_yaml(yaml_path, [], combos_c_path)
+    enhance_yaml(yaml_path, [], combos_c_path)
 
 
 if __name__ == '__main__':

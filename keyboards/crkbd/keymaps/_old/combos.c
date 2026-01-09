@@ -14,8 +14,8 @@ const uint16_t PROGMEM fo_combo[] = {KC_F, KC_O, COMBO_END};
 const uint16_t PROGMEM ou_combo[] = {KC_O, KC_U, COMBO_END};
 const uint16_t PROGMEM ha_combo[] = {LGUI_T(KC_H), LSFT_T(KC_A), COMBO_END};
 const uint16_t PROGMEM ae_combo[] = {LSFT_T(KC_A), LALT_T(KC_E), COMBO_END};
-const uint16_t PROGMEM p_comma_combo[] = {KC_P, KC_COMMA, COMBO_END};
-const uint16_t PROGMEM comma_period_combo[] = {KC_COMMA, TD_DOT, COMBO_END};
+const uint16_t PROGMEM p_comma_combo[] = {KC_P, TD(COMM_TD), COMBO_END};
+const uint16_t PROGMEM comma_period_combo[] = {TD(COMM_TD), TD(DOT_TD), COMBO_END};
 
 // 2 hand combos
 const uint16_t PROGMEM gy_combo[] = {KC_G, KC_Y, COMBO_END};
