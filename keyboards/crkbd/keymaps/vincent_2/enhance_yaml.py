@@ -25,7 +25,7 @@ KEYCODE_MAP = {
     'KC_N': 'N', 'KC_R': 'R', 'KC_T': 'T', 'KC_S': 'S', 'KC_G': 'G',
     'KC_Y': 'Y', 'KC_H': 'H', 'KC_A': 'A', 'KC_E': 'E', 'KC_I': 'I',
     'KC_Z': 'Z', 'KC_X': 'X', 'KC_M': 'M', 'KC_C': 'C', 'KC_V': 'V',
-    'KC_K': 'K', 'KC_P': 'P', 'KC_COMM': ',', 'KC_DOT': '.', 'KC_SLSH': '/',
+    'KC_K': 'K', 'KC_P': 'P', 'TD_COMM': ',', 'TD_DOT': '.', 'TD_SLSH': '/',
     'KC_ESC': 'ESC', 'KC_BSPC': 'BSPC', 'KC_TAB': 'TAB', 'KC_ENTER': 'ENTER',
     'KC_SPC': 'SPC', 'KC_DEL': 'DEL', 'KC_MINUS': '-', 'CW_TOGG': 'CW_TOGG',
 }
