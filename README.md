@@ -7,4 +7,4 @@
 
 ## Keymap
 
-Visual keymap layout: [keymap.svg](keyboards/crkbd/keymaps/vincent_2/keymap.svg)
+![Keymap Layout](keyboards/crkbd/keymaps/vincent_2/keymap.svg)
