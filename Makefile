@@ -13,23 +13,18 @@ ifeq ($(QMK_FIRMWARE_ROOT),)
 endif
 
 # Custom targets
-crkbd_old:
-	keymapviz $(QMK_USERSPACE)/keyboards/crkbd/keymaps/vincent/keymap.c -r -c $(QMK_USERSPACE)/keymapviz.ini
-	qmk compile -kb crkbd -km vincent
-
-
-KEYMAP_JSON := $(QMK_USERSPACE)/keyboards/crkbd/keymaps/vincent_2/keymap.json
-KEYMAP_YAML := $(QMK_USERSPACE)/keyboards/crkbd/keymaps/vincent_2/keymap.yaml
-KEYMAP_SVG := $(QMK_USERSPACE)/keyboards/crkbd/keymaps/vincent_2/keymap.svg
-KEYMAP_C := $(QMK_USERSPACE)/keyboards/crkbd/keymaps/vincent_2/keymap.c
-ADD_COMBOS_SCRIPT := $(QMK_USERSPACE)/keyboards/crkbd/keymaps/vincent_2/enhance_yaml.py
+KEYMAP_JSON := $(QMK_USERSPACE)/keyboards/crkbd/keymaps/vincent/keymap.json
+KEYMAP_YAML := $(QMK_USERSPACE)/keyboards/crkbd/keymaps/vincent/keymap.yaml
+KEYMAP_SVG := $(QMK_USERSPACE)/keyboards/crkbd/keymaps/vincent/keymap.svg
+KEYMAP_C := $(QMK_USERSPACE)/keyboards/crkbd/keymaps/vincent/keymap.c
+ADD_COMBOS_SCRIPT := $(QMK_USERSPACE)/keyboards/crkbd/keymaps/vincent/enhance_yaml.py
 	
 crkbd: $(KEYMAP_SVG)
-	qmk compile -kb crkbd -km vincent_2
+	qmk compile -kb crkbd -km vincent
 
 $(KEYMAP_JSON): $(KEYMAP_C)
 	@echo "Converting keymap.c to keymap.json using QMK c2json..."
-	@qmk c2json -kb crkbd/rev1 -km vincent_2 -o $(KEYMAP_JSON) $(KEYMAP_C) || (echo "Error: Failed to convert keymap.c to JSON" && exit 1)
+	@qmk c2json -kb crkbd/rev1 -km vincent -o $(KEYMAP_JSON) $(KEYMAP_C) || (echo "Error: Failed to convert keymap.c to JSON" && exit 1)
 
 $(KEYMAP_YAML): $(KEYMAP_JSON) $(KEYMAP_C) $(ADD_COMBOS_SCRIPT)
 	@echo "Parsing keymap.json to YAML..."
