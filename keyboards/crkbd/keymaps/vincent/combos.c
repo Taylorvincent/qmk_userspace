@@ -5,7 +5,8 @@ enum combo_events {
     COMBO_GY,
     VI_EMAIL,
     COMBO_THUMB,
-    COMBO_U_QUOTE
+    COMBO_U_QUOTE,
+    COMBO_YH
 };
 
 /**
@@ -20,6 +21,7 @@ const uint16_t PROGMEM rt_combo[] = {LALT_T(KC_R), LSFT_T(KC_T), COMBO_END};
 const uint16_t PROGMEM p_comma_combo[] = {KC_P, KC_COMM, COMBO_END};
 const uint16_t PROGMEM combo_thumb[] = {LGUI_T(KC_BSPC), LGUI_T(KC_SPC), COMBO_END};
 const uint16_t PROGMEM u_quote_combo[] = {KC_U, KC_QUOT, COMBO_END};
+const uint16_t PROGMEM yh_combo[] = {KC_Y, KC_H, COMBO_END};
 
 // 2 hand combos
 const uint16_t PROGMEM gy_combo[] = {KC_G, KC_Y, COMBO_END};
@@ -33,6 +35,7 @@ combo_t key_combos[] = {
     [VI_EMAIL] = COMBO_ACTION(vi_email_combo),
     [COMBO_THUMB] = COMBO(combo_thumb, KC_LSFT),
     [COMBO_U_QUOTE] = COMBO(u_quote_combo, KC_DQUO),
+    [COMBO_YH] = COMBO(yh_combo, KC_MINUS),
 };
 
 // Per-combo terms: lower for homerow mod combos to avoid accidental triggers

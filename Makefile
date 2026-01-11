@@ -35,7 +35,7 @@ $(KEYMAP_YAML): $(KEYMAP_JSON) $(KEYMAP_C) $(ADD_COMBOS_SCRIPT)
 
 $(KEYMAP_SVG): $(KEYMAP_YAML)
 	@echo "Generating SVG visualization..."
-	keymap draw $(KEYMAP_YAML) -o $(KEYMAP_SVG)
+	keymap -c my_config.yaml draw $(KEYMAP_YAML) -o $(KEYMAP_SVG)
 	@echo "SVG generated: $(KEYMAP_SVG)"
 	@echo "Cleaning up keymap.json to avoid interference with keymap generation..."
 	@rm -f $(KEYMAP_JSON)
