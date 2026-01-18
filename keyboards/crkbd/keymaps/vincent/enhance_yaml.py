@@ -28,6 +28,20 @@ KEYCODE_MAP = {
     'KC_K': 'K', 'KC_P': 'P', 'TD_COMM': ',', 'KC_DOT': '.', 'KC_SLSH': '/',
     'KC_ESC': 'ESC', 'KC_BSPC': 'BSPC', 'KC_TAB': 'TAB', 'KC_ENTER': 'ENTER',
     'KC_SPC': 'SPC', 'KC_DEL': 'DEL', 'KC_MINUS': '-', 'CW_TOGG': 'CW_TOGG',
+    # Symbol keycodes
+    'KC_DOLLAR': '$', 'KC_DLR': '$',
+    'KC_AMPERSAND': '&', 'KC_AMPR': '&',
+    'KC_PIPE': '|',
+    'KC_LPRN': '(', 'KC_RPRN': ')',
+    'KC_LCBR': '{', 'KC_RCBR': '}',
+    'KC_LBRC': '[', 'KC_RBRC': ']',
+    'KC_PLUS': '+',
+    'KC_EQL': '=',
+    'KC_AT': '@',
+    'KC_HASH': '#',
+    'KC_SEMICOLON': ';',
+    'KC_COLON': ':',
+    'KC_SLASH': '/',  # Alias for KC_SLSH
 }
 
 # Mod-tap keycode patterns
@@ -196,6 +210,169 @@ def find_combo_action(content, combo_event):
     return None
 
 
+def parse_key_overrides_from_c(overrides_c_path):
+    """Parse key override definitions from overrides.c file.
+    Extracts ko_make_basic(MOD_MASK_SHIFT, KC_XXX, KC_YYY) patterns.
+    Returns a dictionary mapping base keycodes to their shifted equivalents.
+    Example: {KC_BSPC: KC_DEL, KC_COMM: KC_SEMICOLON, ...}
+    """
+    with open(overrides_c_path, 'r') as f:
+        content = f.read()
+    
+    overrides = {}
+    
+    # Pattern to match: ko_make_basic(MOD_MASK_SHIFT, KC_XXX, KC_YYY)
+    # We only care about MOD_MASK_SHIFT overrides
+    pattern = r'ko_make_basic\s*\(\s*MOD_MASK_SHIFT\s*,\s*(KC_\w+)\s*,\s*(KC_\w+)\s*\)'
+    
+    for match in re.finditer(pattern, content):
+        base_keycode = match.group(1)
+        shifted_keycode = match.group(2)
+        overrides[base_keycode] = shifted_keycode
+    
+    return overrides
+
+
+def find_keys_by_tap_value(yaml_data, tap_value):
+    """Find all keys in YAML that match a given tap value.
+    Searches across all layers.
+    Works with both plain keys (string format) and mod-tap keys (dict with t: and h:).
+    Returns list of (layer_name, key_idx, key) tuples.
+    """
+    matching_keys = []
+    
+    # Search through all layers
+    for layer_name, layer_keys in yaml_data.get('layers', {}).items():
+        for idx, key in enumerate(layer_keys):
+            if isinstance(key, str):
+                # Plain key - check if it matches the tap value
+                if key == tap_value:
+                    matching_keys.append((layer_name, idx, key))
+            elif isinstance(key, dict):
+                # Mod-tap or other dict key - check tap field
+                tap_val = key.get('t')
+                if tap_val == tap_value:
+                    matching_keys.append((layer_name, idx, key))
+    
+    return matching_keys
+
+
+def convert_keycode_to_yaml(keycode_str):
+    """Convert QMK keycode to YAML display format.
+    First checks KEYCODE_MAP, then handles special cases,
+    then strips KC_ prefix if not found.
+    Examples:
+    - KC_DEL -> DEL
+    - KC_BSPC -> BSPC
+    - KC_SEMICOLON -> SEMICOLON (not in map, strips KC_)
+    - KC_COMM -> , (special case)
+    """
+    # Check KEYCODE_MAP first
+    if keycode_str in KEYCODE_MAP:
+        return KEYCODE_MAP[keycode_str]
+    
+    # Handle special cases
+    if keycode_str == "KC_COMM":
+        return ','
+    elif keycode_str == "KC_DOT":
+        return '.'
+    elif keycode_str == "KC_QUOT":
+        return "'"
+    
+    # If not in map and not a special case, strip KC_ prefix
+    if keycode_str.startswith('KC_'):
+        return keycode_str[3:]  # Remove 'KC_' prefix
+    
+    # Return as-is if it doesn't start with KC_
+    return keycode_str
+
+
+def add_shifted_codes_to_yaml(yaml_data, overrides):
+    """Add shifted codes (s: field) to YAML keys based on key overrides.
+    overrides is a dict mapping base keycodes to shifted keycodes.
+    Example: {KC_BSPC: KC_DEL, KC_COMM: KC_SEMICOLON, ...}
+    """
+    if not overrides:
+        return 0
+    
+    updated_count = 0
+    
+    for base_keycode, shifted_keycode in overrides.items():
+        # Convert base keycode to YAML format
+        base_yaml = convert_keycode_to_yaml(base_keycode)
+        
+        # Find all keys in YAML that match the base keycode
+        matching_keys = find_keys_by_tap_value(yaml_data, base_yaml)
+        
+        # Convert shifted keycode to YAML format
+        shifted_yaml = convert_keycode_to_yaml(shifted_keycode)
+        
+        for layer_name, key_idx, key in matching_keys:
+            layer = yaml_data['layers'][layer_name]
+            
+            # Convert key to dict if it's a string
+            if isinstance(key, str):
+                # Create dict with tap and shifted fields
+                new_key = {'t': key}
+                new_key['s'] = shifted_yaml
+                layer[key_idx] = new_key
+                updated_count += 1
+                print(f"  Added shifted code to {layer_name}[{key_idx}]: {base_yaml} -> s:'{shifted_yaml}'")
+            elif isinstance(key, dict):
+                # Update or add s: field (overwrite if exists)
+                key['s'] = shifted_yaml
+                updated_count += 1
+                print(f"  Updated shifted code on {layer_name}[{key_idx}]: {base_yaml} -> s:'{shifted_yaml}'")
+    
+    return updated_count
+
+
+def update_combo_trigger_keys(yaml_data):
+    """Update combo trigger keys to match the structure of layer keys.
+    If a layer key has an s: field, the corresponding combo trigger key should also have it.
+    This ensures the keymap drawer can properly match combo trigger keys to layer keys.
+    """
+    if 'combos' not in yaml_data:
+        return
+    
+    updated_count = 0
+    
+    # Update combo trigger keys
+    for combo in yaml_data.get('combos', []):
+        trigger_keys = combo.get('tk', [])
+        combo_layers = combo.get('l', [])
+        
+        for tk in trigger_keys:
+            if not isinstance(tk, dict):
+                continue
+            
+            tap_val = tk.get('t')
+            hold_val = tk.get('h')
+            
+            # Find the corresponding layer key for each combo layer
+            for layer_name in combo_layers:
+                layer = yaml_data['layers'].get(layer_name, [])
+                for layer_key in layer:
+                    # Check if this layer key matches the trigger key
+                    if isinstance(layer_key, str):
+                        if layer_key == tap_val and hold_val is None:
+                            # Plain key matches - no s: field to copy
+                            break
+                    elif isinstance(layer_key, dict):
+                        layer_tap = layer_key.get('t')
+                        layer_hold = layer_key.get('h')
+                        if layer_tap == tap_val and layer_hold == hold_val:
+                            # Found matching key - copy s: field if it exists and not already in tk
+                            if 's' in layer_key:
+                                if 's' not in tk:
+                                    tk['s'] = layer_key['s']
+                                    updated_count += 1
+                            break
+    
+    if updated_count > 0:
+        print(f"  Updated {updated_count} combo trigger keys with shifted codes")
+
+
 def parse_tapdances_from_c(tapdance_c_path):
     """Parse tap dance definitions from tapdance.c file.
     Reads comments from the td_keycodes enum and splits them:
@@ -358,6 +535,15 @@ def enhance_yaml(yaml_path, combos, combos_c_path):
     else:
         print(f"Warning: {tapdance_c_path} not found, skipping tap dance parsing")
     
+    # Parse key overrides from overrides.c
+    overrides_c_path = script_dir / 'overrides.c'
+    overrides = {}
+    if overrides_c_path.exists():
+        overrides = parse_key_overrides_from_c(overrides_c_path)
+        print(f"Found {len(overrides)} key overrides in overrides.c")
+    else:
+        print(f"Warning: {overrides_c_path} not found, skipping key override parsing")
+    
     # Convert to YAML format
     yaml_combos = []
     for combo in parsed_combos:
@@ -397,7 +583,7 @@ def enhance_yaml(yaml_path, combos, combos_c_path):
             
             # Add align: left for VI_EMAIL combo
             if isinstance(result_display, str) and result_display.startswith('EMAIL:'):
-                combo_spec['offset'] = '-2.0'
+                combo_spec['slide'] = '-.5'
             
             yaml_combos.append(combo_spec)
     
@@ -433,6 +619,14 @@ def enhance_yaml(yaml_path, combos, combos_c_path):
     if tapdances:
         td_count = add_tapdances_to_yaml(yaml_data, tapdances, tapdance_c_path)
         print(f"Updated {td_count} keys with tap dance labels")
+    
+    # Add shifted codes to YAML
+    if overrides:
+        sc_count = add_shifted_codes_to_yaml(yaml_data, overrides)
+        print(f"Updated {sc_count} keys with shifted codes")
+    
+    # Update combo trigger keys to include shifted codes if layer keys have them
+    update_combo_trigger_keys(yaml_data)
     
     # Write back to file
     with open(yaml_path, 'w') as f:

@@ -1,12 +1,13 @@
 #include QMK_KEYBOARD_H
-#include "combos.c"
 #include "tapdance.c"
-#include "overrides.c"
 
 #define TD_COMM TD(COMM_TD)
 #define TD_DOT TD(DOT_TD)
 #define TD_SLSH TD(SLASH_TD)
 #define TD_OS_SHFT_4 TD(OS_SHFT_4_TD)
+
+#include "combos.c"
+#include "overrides.c"
 
 
 const char chordal_hold_layout[MATRIX_ROWS][MATRIX_COLS] PROGMEM =
@@ -15,7 +16,7 @@ const char chordal_hold_layout[MATRIX_ROWS][MATRIX_COLS] PROGMEM =
         'L', 'L', 'L', 'L', 'L', 'L',  'R', 'R', 'R', 'R', 'R', 'R', 
         'L', 'L', 'L', 'L', 'L', 'L',  'R', 'R', 'R', 'R', 'R', 'R', 
         // allow thumb cmd key to trigger same hand faster
-                  'L', '*', '*',  '*', '*', 'L'
+                  '*', '*', '*',  '*', '*', '*'
     );
 
 
@@ -48,11 +49,12 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS,      KC_MPLY, KC_MPRV, KC_VOLD, KC_VOLU, KC_MNXT,
                           KC_TRNS, KC_TRNS, KC_TRNS,      KC_TRNS, KC_TRNS, KC_TRNS
     ),
+										
     [_L3] = LAYOUT_split_3x5_3(
-        KC_EXLM, KC_AT,   KC_LBRC, KC_RBRC, KC_PERC,      KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS,
-        KC_CIRC, KC_AMPR, KC_LPRN, KC_RPRN, KC_TILD,      KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS,
-        KC_HASH, KC_DLR,  KC_LCBR, KC_RCBR, KC_GRV,       KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS,
-                          KC_TRNS, KC_DEL,  KC_TRNS,      KC_TRNS, KC_TRNS, KC_TRNS
+        KC_GRV, KC_DLR,KC_AMPR, KC_PIPE, KC_TRNS,      KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS,
+        KC_ASTR, KC_LPRN, KC_LCBR, KC_LBRC, KC_CIRC,      KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS,
+        KC_PERC, KC_MINS, KC_PLUS, KC_LT, KC_BSLS,       KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS,
+                          KC_TRNS, KC_TRNS,  KC_TRNS,      KC_TRNS, KC_TRNS, KC_TRNS
     ),
     [_L4] = LAYOUT_split_3x5_3(
         RM_TOGG, RM_NEXT, RM_HUEU, RM_SATU, RM_VALU,      KC_TRNS, KC_F7,   KC_F8,   KC_F9,   KC_F10,
