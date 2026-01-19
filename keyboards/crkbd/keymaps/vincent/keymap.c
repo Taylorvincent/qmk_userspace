@@ -1,11 +1,11 @@
 #include QMK_KEYBOARD_H
-#include "tapdance.c"
-
+#define TD_I TD(I_TD)
 #define TD_COMM TD(COMM_TD)
 #define TD_DOT TD(DOT_TD)
 #define TD_SLSH TD(SLASH_TD)
 #define TD_OS_SHFT_4 TD(OS_SHFT_4_TD)
 
+#include "tapdance.c"
 #include "combos.c"
 #include "overrides.c"
 

@@ -2,6 +2,7 @@
 enum td_keycodes {
     OS_SHFT_4_TD, // OS_Shift L4 
     COMM_TD, // , ; 
+    I_TD, // i ij ijk
 };
 
 // Define a type containing as many tapdance states as you need
@@ -21,6 +22,9 @@ static td_state_t td_state;
 td_state_t cur_dance(tap_dance_state_t *state);
 void os_shft_4_finished(tap_dance_state_t *state, void *user_data);
 void os_shft_4_reset(tap_dance_state_t *state, void *user_data);
+void i_tap_dance(tap_dance_state_t *state, void *user_data);
+void i_tap_dance_finished(tap_dance_state_t *state, void *user_data);
+void i_tap_dance_reset(tap_dance_state_t *state, void *user_data);
 
 // Determine the tapdance state to return
 td_state_t cur_dance(tap_dance_state_t *state) {
@@ -105,10 +109,42 @@ void os_shft_4_reset(tap_dance_state_t *state, void *user_data) {
 //     }
 // } 
 
+// Handle I tap dance - sends i, j, k on each tap
+void i_tap_dance(tap_dance_state_t *state, void *user_data) {
+    // Send immediately on each tap
+    switch (state->count) {
+        case 1:
+            // First tap: send 'i'
+            tap_code(KC_I);
+            break;
+        case 2:
+            // Second tap: send 'j'
+            tap_code(KC_J);
+            break;
+        case 3:
+            // Third tap: send 'k'
+            tap_code(KC_K);
+            break;
+        default:
+            // For 4+ taps, send 'i' again
+            tap_code(KC_I);
+            break;
+    }
+}
+
+void i_tap_dance_finished(tap_dance_state_t *state, void *user_data) {
+    // Nothing to do here - we already sent on each tap
+}
+
+void i_tap_dance_reset(tap_dance_state_t *state, void *user_data) {
+    // Nothing special needed on reset
+}
+
 // Define tapdance actions
 tap_dance_action_t tap_dance_actions[] = {
     [OS_SHFT_4_TD] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, os_shft_4_finished, os_shft_4_reset),
-    [COMM_TD] = ACTION_TAP_DANCE_DOUBLE(KC_COMM, KC_SEMICOLON),
+    [COMM_TD] = ACTION_TAP_DANCE_DOUBLE(TD_COMM, KC_SEMICOLON),
+    [I_TD] = ACTION_TAP_DANCE_FN_ADVANCED(i_tap_dance, i_tap_dance_finished, i_tap_dance_reset),
     // [DOT_TD] = ACTION_TAP_DANCE_FN_ADVANCED(sentence_end, sentence_end_finished, NULL),
     // [SLASH_TD] = ACTION_TAP_DANCE_DOUBLE(KC_SLASH, KC_BACKSLASH),
 };
