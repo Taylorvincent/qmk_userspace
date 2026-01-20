@@ -1,7 +1,5 @@
 #include QMK_KEYBOARD_H
 #define TD_I TD(I_TD)
-#define TD_COMM TD(COMM_TD)
-#define TD_DOT TD(DOT_TD)
 #define TD_SLSH TD(SLASH_TD)
 #define TD_OS_SHFT_4 TD(OS_SHFT_4_TD)
 
@@ -34,7 +32,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [_BASE] = LAYOUT_split_3x5_3(
         KC_B,    KC_L,    KC_D,    KC_W,    KC_Q,         KC_J,    KC_F,    KC_O,    KC_U,    KC_QUOT,
         LCTL_T(KC_N), LALT_T(KC_R), LSFT_T(KC_T), LT(1, KC_S), KC_G,         KC_Y,    LT(3, KC_H), LSFT_T(KC_A), LALT_T(KC_E), LCTL_T(KC_I),
-        KC_Z,    KC_X,    KC_M,    KC_C,    KC_V,         KC_K,    KC_P,    TD_COMM, KC_DOT,  KC_SLSH,
+        KC_Z,    KC_X,    KC_M,    KC_C,    KC_V,         KC_K,    KC_P,    KC_COMM, KC_DOT,  KC_SLSH,
                           KC_TRNS, LGUI_T(KC_BSPC), LT(2, KC_ENTER),         TD_OS_SHFT_4, LGUI_T(KC_SPC), KC_TRNS
     ),
     [_L1] = LAYOUT_split_3x5_3(

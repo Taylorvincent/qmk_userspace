@@ -561,7 +561,7 @@ def enhance_yaml(yaml_path, combos, combos_c_path):
                 positions.append(pos)
                 # Get the key display name
                 keycode_str, mod = extract_keycode(keycode)
-                base_key = KEYCODE_MAP.get(keycode_str, keycode_str)
+                base_key = convert_keycode_to_yaml(keycode_str)
                 if mod:
                     trigger_keys.append({'t': base_key, 'h': mod})
                 else:

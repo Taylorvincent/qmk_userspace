@@ -28,7 +28,7 @@ const uint16_t PROGMEM combo_thumb[] = {LGUI_T(KC_BSPC), LGUI_T(KC_SPC), COMBO_E
 const uint16_t PROGMEM u_quote_combo[] = {KC_U, KC_QUOT, COMBO_END};
 const uint16_t PROGMEM yh_combo[] = {KC_Y, LT(3, KC_H), COMBO_END};
 const uint16_t PROGMEM sg_combo[] = {LT(1, KC_S), KC_G, COMBO_END};
-const uint16_t PROGMEM comma_dot_combo[] = {TD_COMM, KC_DOT, COMBO_END};
+const uint16_t PROGMEM comma_dot_combo[] = {KC_COMM, KC_DOT, COMBO_END};
 const uint16_t PROGMEM dot_slash_combo[] = {KC_DOT, KC_SLASH, COMBO_END};
 
 // 2 hand combos
